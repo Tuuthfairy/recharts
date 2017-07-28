@@ -463,11 +463,11 @@ const generateCategoricalChart = (ChartComponent, GraphicalChild) => {
       }
 
       return graphicalItems.map((child) => {
-        const { dataKey, name, unit, formatter } = child.props;
+        const { dataKey, name, unit, formatter, extra } = child.props;
 
         return {
           ...getPresentationAttributes(child),
-          dataKey, unit, formatter,
+          dataKey, unit, formatter, extra,
           name: name || dataKey,
           color: getMainColorOfGraphicItem(child),
           value: getValueByDataKey(data[activeIndex], dataKey),
