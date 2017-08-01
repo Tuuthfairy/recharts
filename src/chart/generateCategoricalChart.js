@@ -424,11 +424,13 @@ const generateCategoricalChart = (ChartComponent, GraphicalChild) => {
 
       if (!isIn) { return null; }
 
-      const { layout } = this.props;
+      const { layout, selectedLabelIndex = -1 } = this.props;
       const { orderedTooltipTicks: ticks, tooltipAxis: axis, tooltipTicks } = this.state;
       const pos = layout === 'horizontal' ? e.chartX : e.chartY;
-      const activeIndex = calculateActiveTickIndex(pos, ticks, axis);
-
+      let activeIndex = calculateActiveTickIndex(pos, ticks, axis);
+      if (activeIndex < 0 && selectedLabelIndex > -1) {
+        activeIndex = selectedLabelIndex;
+      }
       if (activeIndex >= 0) {
         const activeLabel = tooltipTicks[activeIndex] && tooltipTicks[activeIndex].value;
         const activePayload = this.getTooltipContent(activeIndex);
@@ -549,18 +551,19 @@ const generateCategoricalChart = (ChartComponent, GraphicalChild) => {
      * @return {Object} Whole new state
      */
     createDefaultState(props) {
-      const { children } = props;
+      const { children, selectedLabelIndex = -1 } = props;
       const brushItem = findChildByType(children, Brush);
       const startIndex = (brushItem && brushItem.props && brushItem.props.startIndex) || 0;
       const endIndex = (brushItem && brushItem.props && brushItem.props.endIndex)
       || ((props.data && (props.data.length - 1)) || 0);
+
       return {
         chartX: 0,
         chartY: 0,
         dataStartIndex: startIndex,
         dataEndIndex: endIndex,
-        activeTooltipIndex: -1,
-        isTooltipActive: false,
+        activeTooltipIndex: selectedLabelIndex,
+        isTooltipActive: selectedLabelIndex > -1,
       };
     }
     /**
@@ -708,9 +711,10 @@ const generateCategoricalChart = (ChartComponent, GraphicalChild) => {
     };
 
     triggeredAfterMouseMove = (e) => {
-      const { onMouseMove } = this.props;
+      const { onMouseMove, selectedLabelIndex = -1 } = this.props;
       const mouse = this.getMouseInfo(e);
-      const nextState = mouse ? { ...mouse, isTooltipActive: true } : { isTooltipActive: false };
+      const nextState = mouse ? { ...mouse, isTooltipActive: true }
+        : { isTooltipActive: selectedLabelIndex > -1, activeTooltipIndex: selectedLabelIndex };
 
       this.setState(nextState);
       this.triggerSyncEvent(nextState);
@@ -737,8 +741,9 @@ const generateCategoricalChart = (ChartComponent, GraphicalChild) => {
      * @return {Null} no return
      */
     handleMouseLeave = (e) => {
-      const { onMouseLeave } = this.props;
-      const nextState = { isTooltipActive: false };
+      const { onMouseLeave, selectedLabelIndex = -1 } = this.props;
+      const nextState = { isTooltipActive: selectedLabelIndex > -1,
+        activeTooltipIndex: selectedLabelIndex };
 
       this.setState(nextState);
       this.triggerSyncEvent(nextState);
